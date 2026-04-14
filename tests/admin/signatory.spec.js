@@ -1,7 +1,7 @@
 // @ts-check
 import { test, expect } from "@playwright/test";
 import { fakeSignatory } from '../../utils/fakeData';
-import { SignatoryViewModal } from '../../pages/signatory';
+import { AddSignatoryModal, SignatoryViewModal } from '../../pages/signatory';
 
 test.describe.serial("Signatory Management", () => {
   test.beforeEach(async ({ page }) => {
@@ -286,7 +286,10 @@ test.describe.serial("Signatory Management", () => {
     await view.close.click();
   });
 
-  test("Cannot add duplicate signatory record.", async ({ page }) => {
+  test("Test 5: Cannot add duplicate signatory record.", async ({ page }) => {
+    const view = new SignatoryViewModal(page);
+    const addSignatory = new AddSignatoryModal(page);
+
     //detect browser alert
     page.once('dialog', async dialog => {
       // Verify the text matches successful message
@@ -307,48 +310,47 @@ test.describe.serial("Signatory Management", () => {
         test.skip(true, "Signatory list is empty. Skipping test.");
     }
 
-    //click view button
-    const row = page.locator('table tbody tr').nth(10);
+    //click view button on first row
+    const row = page.locator('table tbody tr').nth(0);
     await row.locator('button:has-text("View")').click();
 
     //view modal
-    const viewModal = page.locator("#SignatoryInfo");
-    await expect(viewModal).toBeVisible();
+    await expect(view.modal).toBeVisible();
 
     //get signatory information
-    const title = await viewModal.locator("#title").innerText();
-    const fname = await viewModal.locator("#fname").innerText();
-    const lname = await viewModal.locator("#lname").innerText();
-    const mi = await viewModal.locator("#mi").innerText();
-    const initials = await viewModal.locator("#initials").innerText();
-    const position = await viewModal.locator("#position").innerText();
-    const gis_ce_check = await viewModal.locator("#gis_ce_check").isChecked();
-    const gl_check = await viewModal.locator("#gl_check").isChecked();
-    const s_tree = await viewModal.locator("#s_tree").innerText();
-    const s_signatory = await viewModal.locator("#s_signatory").innerText();
+    const duplicatetitle = await view.title.inputValue();
+    const duplicatefname = await view.fname.inputValue();
+    const duplicatelname = await view.lname.inputValue();
+    const duplicatemi = await view.mi.inputValue();
+    const duplicateinitials = await view.initials.inputValue();
+    const duplicateposition = await view.position.inputValue();
+    const duplicategis_ce_check = await view.gis_ce_check.isChecked();
+    const duplicategl_check = await view.gl_check.isChecked();
+    const duplicates_tree = await view.sTree.inputValue();
+    const duplicates_signatory = await view.sSignatory.inputValue();
 
     //close modal
-    await viewModal.getByLabel('Close').click();
+    await view.close.click();
 
     //click add button
-    await page.locator('a[data-target="#AddProvider"]').click();
+    await page.locator('a[data-target="#AddSignatory"]').click();
 
-    const modal = page.locator("#AddProvider")
-    await expect(modal).toBeVisible();
+    //wait for modal
+    await expect(addSignatory.modal).toBeVisible();
 
     //fill out form and save
-    await modal.locator('[name="title"]').fill(title);
-    await modal.locator('[name="fname"]').fill(fname);
-    await modal.locator('[name="lname"]').fill(lname);
-    await modal.locator('[name="mi"]').fill(mi);
-    await modal.locator('[name="initials"]').fill(initials);
-    await modal.locator('[name="position"]').fill(position);
-    await modal.locator('[name="gis_ce_check"]').setChecked(gis_ce_check);
-    await modal.locator('[name="gl_check"]').setChecked(gl_check);
-    await modal.locator('[name="s_tree"]').selectOption({ label: s_tree });
-    await modal.locator('select[name="s_signatory"]').selectOption({ label: s_signatory });
+    await addSignatory.title.fill(duplicatetitle);
+    await addSignatory.fname.fill(duplicatefname);
+    await addSignatory.lname.fill(duplicatelname);
+    await addSignatory.mi.fill(duplicatemi);
+    await addSignatory.initials.fill(duplicateinitials);
+    await addSignatory.position.fill(duplicateposition);
+    await addSignatory.gis_ce_check.setChecked(duplicategis_ce_check);
+    await addSignatory.gl_check.setChecked(duplicategl_check);
+    await addSignatory.sTree.selectOption(duplicates_tree);
+    await addSignatory.sSignatory.selectOption(duplicates_signatory);
 
-    await modal.getByRole("button", { name: "Add" }).click();
+    await addSignatory.modal.getByRole("button", { name: "Add" }).click();
 
     await page.waitForTimeout(3000);
   });
